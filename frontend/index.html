@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Underwater Object Detection System // Command Cockpit</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Style Sheet -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- BACKGROUND RIPPLE EFFECT -->
+    <div class="ocean-background">
+        <div class="water-overlay"></div>
+    </div>
+
+    <!-- MAIN COCKPIT WRAPPER -->
+    <div class="cockpit-container">
+        
+        <!-- HEADER MODULE -->
+        <header class="cockpit-header">
+            <div class="header-logo">
+                <i class="fa-solid fa-water-lunate logo-icon"></i>
+                <div class="logo-text">
+                    <h1>A.E.O.D.S.</h1>
+                    <span>AI-ENABLED UNDERWATER OBJECT DETECTION SYSTEM</span>
+                </div>
+            </div>
+            
+            <div class="header-status">
+                <div class="status-indicator" id="mode-badge">
+                    <span class="pulse-dot"></span>
+                    <span id="mode-text">STANDALONE SIMULATION</span>
+                </div>
+                
+                <div class="header-telemetry">
+                    <div class="telemetry-item">
+                        <span class="tel-label">FPS:</span>
+                        <span class="tel-val" id="fps-val">60</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">PING:</span>
+                        <span class="tel-val" id="ping-val">--</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="tel-label">API:</span>
+                        <span class="tel-val" id="api-status"><i class="fa-solid fa-circle-nodes"></i> Offline</span>
+                    </div>
+                </div>
+
+                <div class="mode-toggle-group">
+                    <button class="btn btn-secondary active" id="btn-sim-mode">
+                        <i class="fa-solid fa-computer"></i> Browser Sim
+                    </button>
+                    <button class="btn btn-secondary" id="btn-live-mode">
+                        <i class="fa-solid fa-bolt"></i> Live Py-API
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- DASHBOARD GRID -->
+        <main class="cockpit-grid">
+            
+            <!-- LEFT AREA: SONAR & ENVIRONMENT -->
+            <section class="grid-column column-left">
+                
+                <!-- SONAR RADAR PANEL -->
+                <div class="panel-card glass" id="panel-sonar">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-radar icon-glow"></i> Sonar Radar Sweep</h2>
+                        <div class="sonar-metrics">
+                            <span class="met-item"><i class="fa-solid fa-compass"></i> <b id="radar-angle">0</b>°</span>
+                            <span class="met-item"><i class="fa-solid fa-ruler-horizontal"></i> <b id="radar-dist">0.00</b>m</span>
+                        </div>
+                    </div>
+                    <div class="panel-body sonar-body">
+                        <div class="radar-container">
+                            <canvas id="canvas-radar"></canvas>
+                        </div>
+                        <div class="sonar-controls">
+                            <div class="ctrl-group">
+                                <label for="range-sweep-speed">Sweep Speed (Hz)</label>
+                                <input type="range" id="range-sweep-speed" min="10" max="150" value="60">
+                            </div>
+                            <div class="ctrl-group">
+                                <label for="range-beam-width">Beam Width</label>
+                                <input type="range" id="range-beam-width" min="2" max="15" value="6" step="1">
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn btn-primary" id="btn-sweep-toggle">
+                                    <i class="fa-solid fa-pause"></i> Pause Scan
+                                </button>
+                                <button class="btn btn-accent" id="btn-clear-radar">
+                                    <i class="fa-solid fa-rotate-left"></i> Clear Trails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIRTUAL OCEAN ENVIRONMENT PANEL -->
+                <div class="panel-card glass" id="panel-environment">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-fish-fins"></i> Virtual Ocean Sandbox</h2>
+                        <span class="header-tip">Drag nodes to test ML detection</span>
+                    </div>
+                    <div class="panel-body env-body">
+                        <div class="env-sandbox-container">
+                            <canvas id="canvas-env"></canvas>
+                        </div>
+                        <div class="env-controls">
+                            <div class="spawn-header">Add Target to Scanning Path:</div>
+                            <div class="spawn-buttons">
+                                <button class="btn btn-spawn btn-rock" data-type="Rock">
+                                    <i class="fa-solid fa-mountain"></i> Rock
+                                </button>
+                                <button class="btn btn-spawn btn-fish" data-type="Fish">
+                                    <i class="fa-solid fa-fish"></i> Fish Shoal
+                                </button>
+                                <button class="btn btn-spawn btn-sub" data-type="Submarine">
+                                    <i class="fa-solid fa-ship"></i> Submarine
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT AREA: OSCILLOSCOPE, ML WORKBENCH & ESP32 -->
+            <section class="grid-column column-right">
+                
+                <!-- SIGNAL ANALYZER (OSCILLOSCOPE & FFT) -->
+                <div class="panel-card glass" id="panel-analyzer">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-wave-square"></i> Acoustic Waveform & FFT Spectrum</h2>
+                        <div class="panel-tabs">
+                            <button class="tab-btn active" data-tab="tab-raw">Waveform</button>
+                            <button class="tab-btn" data-tab="tab-fft">Spectral FFT</button>
+                        </div>
+                    </div>
+                    <div class="panel-body analyzer-body">
+                        <div class="wave-canvas-container">
+                            <!-- Raw Echo Waveform Canvas -->
+                            <div class="tab-content active" id="tab-raw">
+                                <canvas id="canvas-wave-raw"></canvas>
+                                <div class="canvas-axis-label time-label">Time ($t_{OF}$ - ms)</div>
+                                <div class="canvas-axis-label-y amp-label">Amplitude (V)</div>
+                            </div>
+                            <!-- FFT Power Spectrum Canvas -->
+                            <div class="tab-content" id="tab-fft">
+                                <canvas id="canvas-wave-fft"></canvas>
+                                <div class="canvas-axis-label freq-label">Frequency (kHz)</div>
+                                <div class="canvas-axis-label-y power-label">PSD (dB)</div>
+                            </div>
+                        </div>
+                        <div class="analyzer-details">
+                            <span id="pulse-duration-us">TX Pulse: 200µs</span>
+                            <span id="center-freq-hz">Carrier: 40.0 kHz</span>
+                            <span id="noise-floor-db">Noise Floor: -28 dB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- MACHINE LEARNING OBJECT CLASSIFICATION -->
+                <div class="panel-card glass" id="panel-ml">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-brain"></i> Edge AI Object Classifier</h2>
+                        <span class="badge badge-accent" id="ml-engine-badge">JS NN Core</span>
+                    </div>
+                    <div class="panel-body ml-body">
+                        
+                        <!-- REAL-TIME CLASSIFICATION DISPLAY -->
+                        <div class="ml-live-panel">
+                            <div class="prediction-card">
+                                <div class="pred-class" id="ml-prediction">VOID / WATER</div>
+                                <div class="pred-label">CLASSIFIED OBJECT CLASS</div>
+                                <div class="confidence-gauge">
+                                    <div class="gauge-bar" id="ml-confidence-bar" style="width: 100%"></div>
+                                    <span class="gauge-percentage" id="ml-confidence-val">100%</span>
+                                </div>
+                            </div>
+
+                            <div class="probability-bars">
+                                <div class="prob-row">
+                                    <span class="prob-lbl">Submarine</span>
+                                    <div class="prob-track"><div class="prob-fill" id="prob-sub" style="width: 0%"></div></div>
+                                    <span class="prob-num" id="prob-sub-val">0%</span>
+                                </div>
+                                <div class="prob-row">
+                                    <span class="prob-lbl">Rock</span>
+                                    <div class="prob-track"><div class="prob-fill" id="prob-rock" style="width: 0%"></div></div>
+                                    <span class="prob-num" id="prob-rock-val">0%</span>
+                                </div>
+                                <div class="prob-row">
+                                    <span class="prob-lbl">Fish Shoal</span>
+                                    <div class="prob-track"><div class="prob-fill" id="prob-fish" style="width: 0%"></div></div>
+                                    <span class="prob-num" id="prob-fish-val">0%</span>
+                                </div>
+                                <div class="prob-row">
+                                    <span class="prob-lbl">Void</span>
+                                    <div class="prob-track"><div class="prob-fill" id="prob-void" style="width: 100%"></div></div>
+                                    <span class="prob-num" id="prob-void-val">100%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- EXTRACTED SIGNAL FEATURES -->
+                        <div class="ml-features-toggle">
+                            <button class="btn btn-small btn-secondary" id="btn-toggle-features">
+                                <i class="fa-solid fa-list-check"></i> Inspect Acoustic Features
+                            </button>
+                        </div>
+                        
+                        <div class="features-panel hidden" id="features-table-container">
+                            <table class="features-table">
+                               <thead>
+                                   <tr>
+                                       <th>Acoustic Feature</th>
+                                       <th>Val.</th>
+                                       <th>Significance</th>
+                                   </tr>
+                               </thead>
+                               <tbody>
+                                   <tr>
+                                       <td>Peak Amplitude ($A_{peak}$)</td>
+                                       <td id="feat-amp">0.040</td>
+                                       <td>Target density / Specularity</td>
+                                   </tr>
+                                   <tr>
+                                       <td>Time of Flight ($t_{of}$)</td>
+                                       <td id="feat-tof">0.00ms</td>
+                                       <td>Translates to physical distance</td>
+                                   </tr>
+                                   <tr>
+                                       <td>Analytic Envelope Energy</td>
+                                       <td id="feat-energy">0.002</td>
+                                       <td>Material impedance profile</td>
+                                   </tr>
+                                   <tr>
+                                       <td>Echo Signal Duration</td>
+                                       <td id="feat-duration">0.00ms</td>
+                                       <td>Surface dispersion & scatter</td>
+                                   </tr>
+                                   <tr>
+                                       <td>Spectral Centroid ($f_{cent}$)</td>
+                                       <td id="feat-centroid">0.0 kHz</td>
+                                       <td>Frequency response distribution</td>
+                                   </tr>
+                               </tbody>
+                            </table>
+                        </div>
+
+                        <!-- MACHINE LEARNING TRAINING MODULE -->
+                        <div class="ml-training-panel">
+                            <div class="train-header">
+                                <h3><i class="fa-solid fa-gears"></i> Model Training & Confusion Matrix</h3>
+                                <button class="btn btn-accent btn-small" id="btn-train-model">
+                                    <i class="fa-solid fa-graduation-cap"></i> Train Model
+                                </button>
+                            </div>
+                            <div class="train-workbench">
+                                <div class="conf-matrix-container">
+                                    <div class="conf-matrix-grid" id="conf-matrix-grid">
+                                        <!-- Confusion Matrix cells dynamically injected -->
+                                    </div>
+                                </div>
+                                <div class="train-stats">
+                                    <div class="stat-line"><span>Classifier Status:</span> <b class="glow-text-green" id="train-status">Trained</b></div>
+                                    <div class="stat-line"><span>Validation Acc:</span> <b class="glow-text-cyan" id="train-accuracy">96.8%</b></div>
+                                    <div class="stat-line"><span>Epochs Trained:</span> <b id="train-epochs">150</b></div>
+                                    <div class="stat-line"><span>Training Loss:</span> <b id="train-loss">0.042</b></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ESP32 SYSTEM STATUS & HARDWARE SERIAL CONSOLE -->
+                <div class="panel-card glass" id="panel-esp32">
+                    <div class="panel-header">
+                        <h2><i class="fa-solid fa-microchip"></i> ESP32 Hardware Console Monitor</h2>
+                        <span class="badge badge-green" id="serial-baud">115200 BAUD</span>
+                    </div>
+                    <div class="panel-body esp32-body">
+                        <div class="esp32-stats-grid">
+                            <div class="stat-card">
+                                <span class="stat-lbl">RSSI</span>
+                                <span class="stat-num" id="esp-rssi">-64 dBm</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-lbl">Free Heap</span>
+                                <span class="stat-num" id="esp-heap">194.2 KB</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-lbl">CPU Temp</span>
+                                <span class="stat-num" id="esp-temp">42.8°C</span>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-lbl">Vcc Supply</span>
+                                <span class="stat-num" id="esp-voltage">3.28 V</span>
+                            </div>
+                        </div>
+                        <div class="console-wrapper">
+                            <div class="console-header">
+                                <span><i class="fa-solid fa-terminal"></i> Serial USB/WS Feed</span>
+                                <button class="btn-clear-console" id="btn-clear-console"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                            <div class="console-body" id="serial-console-feed">
+                                <div class="log-line system">[SYSTEM]: Virtual ESP32 Hardware Emulation online...</div>
+                                <div class="log-line system">[SYSTEM]: Transducer configured for sound velocity v=1480m/s in saltwater.</div>
+                                <div class="log-line input">{"status":"system_ready","message":"ESP32 Underwater Sonar online."}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- MAIN JAVASCRIPT APPLICATION INJECTIONS -->
+    <script src="js/environment.js"></script>
+    <script src="js/sonar.js"></script>
+    <script src="js/oscilloscope.js"></script>
+    <script src="js/ml_workbench.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
